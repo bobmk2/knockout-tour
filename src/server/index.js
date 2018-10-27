@@ -10,6 +10,10 @@ app.get('/hello-world', (req, res) => {
   res.json({hello: 'world'});
 });
 
+app.get('/dist/client.js', (req, res) => {
+  res.sendFile('client.js', {root: `${__dirname}/../../dist`});
+});
+
 const http = require('http');
 
 const server = http.createServer(app);
