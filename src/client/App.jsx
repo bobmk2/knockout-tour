@@ -1,16 +1,14 @@
 import React from 'react';
 
-import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
-import RaisedButton from 'material-ui/RaisedButton';
+import Header from './components/Header';
+import MainFrame from './components/MainFrame';
 
 export default class App extends React.Component {
   render() {
     return (
       <div>
-        Hello World!!! 🍣
-        <MuiThemeProvider>
-          <RaisedButton label="test" />
-        </MuiThemeProvider>
+        <Header/>
+        <MainFrame/>
       </div>
     )
   }
