@@ -25,6 +25,7 @@ const http = require('http');
 
 const socketIO = require('socket.io');
 const server = http.createServer(app);
+const {cloneDeep} = require('lodash');
 
 const clients = {};
 const players = new Set();
@@ -32,9 +33,9 @@ const playerMapping = {};
 const Player = require('../both/socket/objects/Player');
 const TourPage = require('../both/socket/objects/TourPage');
 
-const oneMinTourInterval = 10000;
-const threeMinTourInterval = 30000;
-const fiveMinTourInterval = 50000;
+const oneMinTourInterval = 60000;
+const threeMinTourInterval = 20000;
+const fiveMinTourInterval = 300000;
 
 const pageInterval = 10000;
 
@@ -50,6 +51,27 @@ const tourPageIdx = {
   5: 2
 };
 
+
+// init
+const _now = new Date();
+const _one = cloneDeep(tourPageList[tourPageIdx[1]]);
+_one.startedAt = _now;
+_one.endedAt = new Date(_now.getTime() + oneMinTourInterval);
+
+const _three = cloneDeep(tourPageList[tourPageIdx[3]]);
+_three.startedAt = _now;
+_three.endedAt = new Date(_now.getTime() + threeMinTourInterval);
+
+const _five = cloneDeep(tourPageList[tourPageIdx[5]]);
+_five.startedAt = _now;
+_five.endedAt = new Date(_now.getTime() + fiveMinTourInterval);
+
+const currentPage = {
+  1: _one,
+  3: _three,
+  5: _five
+};
+
 const interval = {
   1: false,
   3: false,
@@ -57,31 +79,37 @@ const interval = {
 };
 
 setInterval(() => {
-  nextPage(1);
-}, oneMinTourInterval);
+  nextPage(1, oneMinTourInterval);
+}, (oneMinTourInterval + pageInterval));
 
 setInterval(() => {
-  nextPage(3);
-}, threeMinTourInterval);
+  nextPage(3, threeMinTourInterval);
+}, (threeMinTourInterval + pageInterval));
 
 setInterval(() => {
-  nextPage(5);
-}, fiveMinTourInterval);
+  nextPage(5, fiveMinTourInterval);
+}, (fiveMinTourInterval + pageInterval));
 
-function nextPage(tourType) {
+function nextPage(tourType, tourLengthMs) {
   let _nextTourIdx = tourPageIdx[tourType] + 1;
   if (_nextTourIdx >= tourPageList.length) {
     _nextTourIdx = 0;
   }
   tourPageIdx[tourType] = _nextTourIdx;
-  onChangedPage(tourType);
+  onChangedPage(tourType, tourLengthMs);
 }
 
-function onChangedPage(tourType) {
-  const _nextTourPage = tourPageList[tourPageIdx[tourType]];
-  _nextTourPage.startedAt = new Date();
+function onChangedPage(tourType, tourLengthMs) {
+  const _nextTourPage = cloneDeep(tourPageList[tourPageIdx[tourType]]);
 
-  emitAllClients(events.PAGE_INTERVAL, {tourType, intervalSec: pageInterval});
+  // TODO WARN
+  const _now = new Date();
+  _nextTourPage.startedAt = new Date(_now.getTime() + pageInterval);
+  _nextTourPage.endedAt = new Date(_nextTourPage.startedAt.getTime() + (tourLengthMs));
+
+  currentPage[tourType] = _nextTourPage;
+
+  emitAllClients(events.PAGE_INTERVAL, {tourType});
   interval[tourType] = true;
   setTimeout(() => {
     interval[tourType] = false;
@@ -112,9 +140,9 @@ function onSocketConnection(client) {
 
   const initialData = {
     tourPages: {
-      1: tourPageList[tourPageIdx[1]],
-      3: tourPageList[tourPageIdx[3]],
-      5: tourPageList[tourPageIdx[5]]
+      1: currentPage[1],
+      3: currentPage[3],
+      5: currentPage[5]
     },
     interval,
     players: Array.from(players)

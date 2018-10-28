@@ -32,6 +32,7 @@ class Socket {
     socket.on(events.REMOVE_PLAYER, this.onRemovedPlayer);
     socket.on(events.CHANGE_PLAYER_STATUS, this.onChangedPlayerStatus);
     socket.on(events.MOVE_PAGE, this.onMovedPage);
+    socket.on(events.PAGE_INTERVAL, this.onStartedPageInterval);
   }
 
   onSocketConnected() {
@@ -47,6 +48,9 @@ class Socket {
 
     Object.keys(data.tourPages).forEach(tourType => {
       const tourPage = data.tourPages[tourType];
+      tourPage.startedAt = new Date(tourPage.startedAt);
+      tourPage.endedAt = new Date(tourPage.endedAt);
+
       console.log(`tourType: ${tourType} `, tourPage);
       store.dispatch(moveTourPage(tourType, tourPage))
     });
@@ -85,11 +89,13 @@ class Socket {
 
   onMovedPage({tourType, tourPage}) {
     console.log('Move page', {tourType, tourPage});
+    tourPage.startedAt = new Date(tourPage.startedAt);
+    tourPage.endedAt = new Date(tourPage.endedAt);
     store.dispatch(moveTourPage(tourType, tourPage));
   }
 
-  onStartPageInterval({tourType}) {
-    console.log('Start Page Interval', {tourType, intervalSec});
+  onStartedPageInterval({tourType}) {
+    console.log('Start Page Interval', {tourType});
     store.dispatch(startIntervalPage(tourType));
   }
 

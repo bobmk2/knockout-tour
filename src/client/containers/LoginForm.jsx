@@ -7,7 +7,7 @@ import {connect} from 'react-redux';
 // import InputLabel from '@material-ui/core/InputLabel';
 import TextField from '@material-ui/core/TextField';
 import Button from '@material-ui/core/Button';
-import PlayArrowIcon from '@material-ui/icons/PlayArrow';
+import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat';
 
 import Paper from '@material-ui/core/Paper';
 import MenuList from '@material-ui/core/MenuList';
@@ -78,7 +78,6 @@ class LoginForm extends Component {
 
   handleStartButtonClick() {
     return () => {
-      console.log('clicked')
       const _player = new Player({id: -1, name: this.props.name, tourType: this.state.tourType});
       const {dispatch} = this.props;
       dispatch(loginPlayer(_player));
@@ -151,7 +150,7 @@ class LoginForm extends Component {
           // component={Link}
           // to="/tour"
         >
-          {this.props.initialized === false ? <CircularProgress size={20} color='inherit'/> : <PlayArrowIcon className={classes.loginIcon}/>}
+          {this.props.initialized === false ? <CircularProgress size={20} color='inherit'/> : <DirectionsBoatIcon className={classes.loginIcon}/>}
           {this.props.initialized === false ? "Loading..." : "Start Tour"}
         </Button>
       </form>

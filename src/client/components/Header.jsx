@@ -11,6 +11,15 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Typography from '@material-ui/core/Typography';
 import Select from '@material-ui/core/Select';
 import PersonIcon from '@material-ui/icons/Person';
+import ChatIcon from '@material-ui/icons/Chat';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import FilledInput from '@material-ui/core/FilledInput';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
+import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat';
+
+
+const {toMinSecStr} = require('../utils/StringUtil');
 
 import {updatePlayerStatus} from '../actions/PlayerActions';
 
@@ -25,28 +34,53 @@ const styles = {
     marginLeft: -12,
     marginRight: 20,
   },
+  colorPrimary: {
+    backgroundColor: '#BDBDBD',
+  },
+  barColorPrimary: {
+    backgroundColor: '#707070',
+  },
 };
 
 class Header extends Component {
   constructor(props, context) {
     super(props, context);
     this.state = {
-      tourType: 3
+      tourType: 3,
+      passSec: -1,
+      remainSec: -1,
+      completed: 0
     };
     this.handleChange = this.handleChange.bind(this);
+    this.progress = this.progress.bind(this);
   }
 
   componentDidMount() {
-    const {dispatch} = this.props;
+    this.timer = setInterval(() => {
+      this.progress();
+    }, 200);
+
     // dispatch(updatePlayerStatus({id: 'x', name: 'y', tourType: 10}));
   }
 
   componentWillReceiveProps(nextProps) {
     const {dispatch} = nextProps;
-    console.log('XXX')
     // dispatch(updatePlayerStatus({id: 'x', name: 'y', tourType: 10}));
   }
 
+  componentWillUnmount() {
+    clearInterval(this.timer);
+  }
+
+  progress() {
+    if (this.props.pageStartedAt && this.props.pageEndedAt) {
+      const now = new Date();
+      const passSec = Math.floor((now - this.props.pageStartedAt) / 1000);
+      const remainSec = -1 * (Math.floor((this.props.pageEndedAt - this.props.pageStartedAt) / 1000) - passSec);
+      const completed = Math.round(passSec / (Math.floor((this.props.pageEndedAt - this.props.pageStartedAt) / 1000)) * 100);
+      this.setState({passSec, remainSec, completed})
+    }
+  };
 
   handleChange(name) {
     return (event) => {
@@ -57,26 +91,90 @@ class Header extends Component {
   }
 
   render() {
-    console.log('props', this.props)
     const {classes} = this.props;
     return (
         <AppBar position="fixed">
           <Toolbar>
+            <DirectionsBoatIcon
+              color={this.props.login === true ? 'inherit' : 'disabled'}
+              style={{paddingRight: "5px"}}
+            />
             <Select
+              disabled={this.props.login === false}
               value={this.props.tourType}
               onChange={this.handleChange('tourType')}
+              style={{
+                color: this.props.login ? '#FFFFFF' : '#777777',
+                width: "120px"
+              }}
             >
               <option value={1}>1 minute</option>
               <option value={3}>3 minutes</option>
               <option value={5}>5 minutes</option>
-              <option value={10}>10 minutes</option>
             </Select>
-            <IconButton className={classes.menuButton} color="inherit" aria-label="Menu">
-              <MenuIcon/>
-            </IconButton>
-            <Typography variant="title" color="inherit" className={classes.flex}>
-              👊 Knockout Tour 🚀
-            </Typography>
+            {/*<IconButton className={classes.menuButton} color="inherit" aria-label="Menu">*/}
+              {/*<MenuIcon/>*/}
+            {/*</IconButton>*/}
+            {/*<Typography variant="title" color="inherit" className={classes.flex}>*/}
+              {/*👊 Knockout Tour 🚀*/}
+            {/*</Typography>*/}
+
+            <div style={{height: "64px", width: "100px", backgroundColor: "#FFFFFF"}}>
+            {
+              this.props.pageThumbnailUrl && this.props.login === true ?
+                <webview src={this.props.pageThumbnailUrl} style={{maxHeight: "64px", maxWidth: "113px", backgroundColor: "#FFFFFF"}}/>
+                :
+                <div/>
+            }
+            </div>
+            <div style={{height: "64px", width: "320px"}}>
+              <div style={{position: 'relative', height: "54px", width: '320px'}}>
+                {
+                  this.props.login ?
+                    <div style={{textAlign: 'left', position: 'absolute', left: 5, top: 34, zIndex: 1, height: "24px", maxHeight: "54px", width: "120px"}}>
+                      {toMinSecStr(this.state.passSec)}
+                    </div>
+                    :
+                    <div/>
+                }
+                <div style={{textAlign: 'center', position: 'absolute', zIndex: 0,height: "54px", maxHeight: "54px", width: "320px", backgroundColor: "#6677DE"}}>
+                  {
+                    this.props.login ?
+                      <table style={{height: "100%", width: "100%"}}>
+                        <tbody>
+                        <tr>
+                          <td align="center">
+                            {this.props.pageTitle ? this.props.pageTitle : ''}
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
+                      :
+                      <table style={{height: "100%", width: "100%"}}>
+                        <tbody>
+                        <tr>
+                          <td align="center">
+                            Waiting...
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
+                  }
+                </div>
+                {
+                  this.props.login ?
+                    <div style={{textAlign: 'right', position: 'absolute', right: 5, top: 34, zIndex: 1, height: "24px", maxHeight: "54px", width: "120px"}}>
+                      {this.props.interval ? '10sec Interval...' : toMinSecStr(this.state.remainSec)}
+                    </div>
+                    :
+                    <div/>
+                }
+              </div>
+              <LinearProgress
+                classes={{colorPrimary: classes.colorPrimary, barColorPrimary: classes.barColorPrimary}}
+                style={{height: "10px"}} variant={this.props.login ? "determinate" : "indeterminate"} value={this.state.completed}/>
+            </div>
+
             {this.props.login === true ?
               <Button color='inherit'>
                 <PersonIcon/>
@@ -85,6 +183,17 @@ class Header extends Component {
               :
               <Button disabled color='inherit'>
                 <PersonIcon/>
+                -
+              </Button>
+            }
+            {this.props.login === true ?
+              <Button color='inherit'>
+                <ChatIcon/>
+                120
+              </Button>
+              :
+              <Button disabled color='inherit'>
+                <ChatIcon/>
                 -
               </Button>
             }
@@ -101,13 +210,27 @@ Header.propTypes = {
 };
 
 const mapStateToProps = (state) => {
-  console.log('Header ', state.player)
-  return {
-    tourType: state.player.tourType,
-    anotherPlayers: state.anotherPlayers,
-    initialized: state.player.initialized,
-    login: state.player.login
-  };
+  const result = {};
+
+  const tourType = state.player.tourType;
+  result.tourType = tourType;
+  result.anotherPlayers = state.anotherPlayers;
+  result.initialized = state.player.initialized;
+  result.login = state.player.login;
+
+  if (state.tourPages.pages[tourType] !== null && typeof state.tourPages.pages[tourType] !== 'undefined') {
+    const tourPage = state.tourPages.pages[tourType];
+    result.pageTitle = tourPage.title;
+    result.pageThumbnailUrl = tourPage.thumbnail;
+    result.pageStartedAt = tourPage.startedAt;
+    result.pageEndedAt = tourPage.endedAt;
+  }
+
+  if (state.tourPages.interval[tourType] !== null && typeof state.tourPages.pages[tourType] !== 'undefined') {
+    result.interval = state.tourPages.interval[tourType];
+  }
+
+  return result;
 };
 
 export default connect(mapStateToProps)(withStyles(styles)(Header));
