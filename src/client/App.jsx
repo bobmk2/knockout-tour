@@ -6,7 +6,7 @@ import MainFrame from './components/MainFrame';
 export default class App extends React.Component {
   render() {
     return (
-      <div>
+      <div style={{backgroundColor: '#FFCCCC'}}>
         <Header/>
         <MainFrame/>
       </div>

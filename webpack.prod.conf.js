@@ -2,6 +2,7 @@ var path = require('path');
 var webpack = require('webpack');
 
 module.exports = {
+  target: 'electron-renderer',
   mode: 'production',
   entry: {
     app: [
@@ -36,6 +37,14 @@ module.exports = {
         loader: "babel",
         query:{
           presets: ['react', 'env']
+        }
+      },
+      {
+        loader: 'string-replace-loader',
+        options: {
+          multiple: [
+            {search: '$socket.io_URL$', replace: 'https://node-knockout-2018.herokuapp.com'}
+          ]
         }
       }
     ]
