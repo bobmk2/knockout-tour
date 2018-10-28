@@ -1,11 +1,22 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const app = express();
+const {findIndex} = require('lodash');
+
+app.use(bodyParser.json());
 
 const port = process.env.PORT || 5000;
 const events = require('../both/socket/Events');
 
 app.use(express.static(__dirname + '/../../public'));
 app.use(express.static(__dirname + '/../../dist'));
+
+const redis = require('redis');
+const redisClient = redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD
+});
 
 app.get('/hello-world', (req, res) => {
   res.json({hello: 'world'});
@@ -15,18 +26,100 @@ app.get('/dist/client.js', (req, res) => {
   res.sendFile('client.js', {root: `${__dirname}/../../dist`});
 });
 
-// DANGER
-const redis = require('redis');
-const redisClient = redis.createClient({
-  host: process.env.REDIS_HOST,
-  port: process.env.REDIS_PORT,
-  password: process.env.REDIS_PASSWORD
+// 使いたいときだけ
+//redisClient.del('pages'); // ページリセット
+
+// ページ取得
+app.get('/api/page/3Vy5nybuWrP3JiwjQ7jXBW2Ujri8hLkk', (req, res) => {
+  return redisClient.lrange('pages', 0, -1, (err, data) => {
+    data = data.map(d => JSON.parse(d));
+    return res.status(200).json(data);
+  })
 });
 
+// ページ追加
+app.post('/api/page/Xm3W8uefdRHiQCxdJhVzRW7Le3yTAHJf', (req, res) => {
+  const body = req.body;
+
+  console.log(body);
+  const page = new TourPage(body);
+
+  if (page.isValid()) {
+    return redisClient.lrange('pages', 0, -1, (err, data) => {
+      data = data.map(d => JSON.parse(d));
+      const foundSameUrl = data.filter(d => d.url === page.url)[0];
+
+      // 同じのがあるのなら登録しない
+      if (typeof foundSameUrl !== 'undefined') {
+        return res.status(400).json({error: 'exists same url', page, exists: foundSameUrl})
+      }
+      return redisClient.rpush('pages', JSON.stringify(page.toJSON()), (err ,count) => {
+        return res.status(200).json(Object.assign({ok: ":)"}, {page}, {count}));
+      });
+    });
+
+  } else {
+    return res.status(400).json({error: 'invalid', page});
+  }
+});
+
+// ページ情報更新
+app.put('/api/page/HPeGNrtwZVBZMSmTFPGB37mNBNaeH5Wg', (req, res) => {
+  const body = req.body;
+
+  const page = new TourPage(body);
+
+  if (page.isValid()) {
+    return redisClient.lrange('pages', 0, -1, (err, data) => {
+      data = data.map(d => JSON.parse(d));
+      const index = findIndex(data, s => s.url === page.url);
+
+      // 同じのがあるのならそれを差し替える
+      if (index !== -1) {
+        data[index] = page.toJSON();
+        return redisClient.del('pages', (err) => {
+          return redisClient.rpush.apply(redisClient, ['pages'].concat(data.map(p => JSON.stringify(p))).concat((err, count) => {
+            return res.status(200).json({ok: ':)', count})
+          }));
+        });
+      } else {
+        return res.status(404).json({error: 'not found same url page data', page});
+      }
+    });
+
+  } else {
+    return res.status(400).json({error: 'invalid', page});
+  }
+});
+
+// ページ削除(URL指定)
+app.delete('/api/page/PnsJDuDLD3WmQajeQJaK5FGXeU6h2Ebz', (req, res) => {
+  const url = req.query.target;
+
+  return redisClient.lrange('pages', 0, -1, (err, data) => {
+    data = data.map(d => JSON.parse(d));
+    const pages = data.filter(d => d.url !== url);
+
+    // たぶん何かしらあると思うが一度全部消して全部登録
+    return redisClient.del('pages', (err) => {
+      return redisClient.rpush.apply(redisClient, ['pages'].concat(pages.map(p => JSON.stringify(p))).concat((err, count) => {
+        return res.status(200).json({ok: ':)', count})
+      }));
+    });
+  });
+});
+
+
+
+/*
 redisClient.set('test', 1, redis.print);
 redisClient.get('test', (err, res) => {
   console.log('redis.test => ',res)
 })
+redisClient.lpush('test1', {name: 'test1', message: '', at: (new Date().getTime() / 1000)}, (err, count) => {
+  console.log(count)
+});
+*/
 
 /**
  * ==========
