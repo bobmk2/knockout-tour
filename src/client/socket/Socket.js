@@ -6,6 +6,7 @@ const io = require('socket.io-client')('$socket.io_URL$');
 let socket = null;
 
 import {moveTourPage, startIntervalPage} from '../actions/TourActions';
+import {postedMessage, updateMessageCount} from '../actions/MessageActions';
 import {initialized, joinedAnotherPlayer, removedAnotherPlayer} from "../actions/PlayerActions";
 
 const storage = require('electron-json-storage');
@@ -52,7 +53,8 @@ class Socket {
       tourPage.endedAt = new Date(tourPage.endedAt);
 
       console.log(`tourType: ${tourType} `, tourPage);
-      store.dispatch(moveTourPage(tourType, tourPage))
+      store.dispatch(moveTourPage(tourType, tourPage));
+      store.dispatch(updateMessageCount(tourType, tourPage.messageCount))
     });
 
     Object.keys(data.interval).forEach(tourType => {
@@ -92,6 +94,7 @@ class Socket {
     tourPage.startedAt = new Date(tourPage.startedAt);
     tourPage.endedAt = new Date(tourPage.endedAt);
     store.dispatch(moveTourPage(tourType, tourPage));
+    store.dispatch(updateMessageCount(tourType, tourPage.messageCount));
   }
 
   onStartedPageInterval({tourType}) {
@@ -117,6 +120,8 @@ class Socket {
     const message = data.message;
     const tourTypeTotalCount = data.tourTypeTotalCount;
     console.log('Posted Message', tourTypeTotalCount, message);
+    store.dispatch(postedMessage(message));
+    store.dispatch(updateMessageCount(message.tourType, tourTypeTotalCount));
   }
 }
 

@@ -394,31 +394,31 @@ function onChangedPage(tourType, tourLengthMs) {
   interval[tourType] = true;
 
   try {
-    redisClient.hget('message-counts', `tour__${tourType}`, (err, count) => {
-      if (err) {
-        throw err
-      }
-      if (count === null) {
-        count = 0;
-      }
-
       setTimeout(() => {
-        interval[tourType] = false;
+        redisClient.hget('message-counts', `tour__${tourType}`, (err, count) => {
+          if (err) {
+            throw err
+          }
+          if (count === null) {
+            count = 0;
+          }
 
-        const _nextTourPage = cloneDeep(tourPageList[tourPageIdx[tourType]]);
+          interval[tourType] = false;
 
-        // TODO WARN
-        const _now = new Date();
-        _nextTourPage.startedAt = new Date(_now.getTime());
-        _nextTourPage.endedAt = new Date(_nextTourPage.startedAt.getTime() + (tourLengthMs));
-        _nextTourPage.messageCount = count;
+          const _now = new Date();
 
-        currentPage[tourType] = _nextTourPage;
+          const _nextTourPage = cloneDeep(tourPageList[tourPageIdx[tourType]]);
 
-        emitAllClients(events.MOVE_PAGE, {tourType, tourPage: _nextTourPage.toEmitData()});
+          // TODO WARN
+          _nextTourPage.startedAt = new Date(_now.getTime());
+          _nextTourPage.endedAt = new Date(_nextTourPage.startedAt.getTime() + (tourLengthMs));
+          _nextTourPage.messageCount = count;
+
+          currentPage[tourType] = _nextTourPage;
+
+          emitAllClients(events.MOVE_PAGE, {tourType, tourPage: _nextTourPage.toEmitData()});
+        });
       }, pageInterval);
-
-    });
 
   } catch (error) {
     util.log(error);

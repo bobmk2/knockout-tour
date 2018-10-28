@@ -190,7 +190,7 @@ class Header extends Component {
             {this.props.login === true ?
               <Button color='inherit'>
                 <ChatIcon/>
-                120
+                {this.props.messageCount}
               </Button>
               :
               <Button disabled color='inherit'>
@@ -229,6 +229,12 @@ const mapStateToProps = (state) => {
 
   if (state.tourPages.interval[tourType] !== null && typeof state.tourPages.pages[tourType] !== 'undefined') {
     result.interval = state.tourPages.interval[tourType];
+  }
+
+  if (state.messages.counts[tourType] !== null && typeof state.messages.counts[tourType] !== 'undefined') {
+    result.messageCount = state.messages.counts[tourType];
+  } else {
+    result.messageCount = 0;
   }
 
   return result;

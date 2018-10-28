@@ -16,6 +16,7 @@ function _tourPages(state = {pages: {1: null, 3: null, 5: null}, interval: {1: f
       nextState.interval[action.tourType] = true;
       console.log(`START_INTERVAL_PAGE [${action.tourType}]`, state, nextState, action);
       return nextState;
+      
     default:
         return state;
   }

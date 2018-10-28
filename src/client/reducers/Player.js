@@ -1,4 +1,3 @@
-import {combineReducers} from 'redux';
 import {INITIALIZED, UPDATE_PLAYER_STATUS, LOGIN_PLAYER} from "../actions/PlayerActions";
 
 import Socket from '../socket/Socket';
