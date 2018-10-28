@@ -26,6 +26,7 @@
   },
   "homepage": "https://github.com/Hackbit/nko2018-kuramae-sushi#readme",
   "dependencies": {
+    "redis": "^2.8.0",
     "body-parser": "^1.18.3",
     "express": "^4.16.4",
     "forever": "^0.15.3",
@@ -45,7 +46,6 @@
     "react-redux": "^5.1.0",
     "react-router-dom": "^4.3.1",
     "react-router-redux": "^4.0.8",
-    "redis": "^2.8.0",
     "redux": "^4.0.1",
     "redux-thunk": "^2.3.0",
     "babel-core": "^6.26.3",
