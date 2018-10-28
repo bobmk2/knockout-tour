@@ -8,13 +8,12 @@
   "main": "electron/index.js",
   "scripts": {
     "start": "cross-env NODE_ENV=production node index.js",
-    "postinstall": "./node_modules/.bin/cross-env NODE_ENV=production ./node_modules/.bin/webpack --config webpack.prod.conf.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "watch:client": "webpack -w --config webpack.dev.conf.js",
     "build:client": "cross-env NODE_ENV=production webpack --config webpack.prod.conf.js",
     "debug:app": "electron --debug=5858 ./",
-    "package:win": "npm run build:client && electron-packager . knockout-tour --out=release-builds --ignore=\"^/bin\" --ignore=\"^.git\" --ignore=\"^.idea\" --platform=win32 --arch=x64 --electron-version=3.0.6  --overwrite",
-    "package:mac": "npm run build:client && electron-packager . knockout-tour --out=release-builds --ignore=\"^/bin\" --ignore=\"^.git\" --ignore=\"^.idea\" --platform=darwin --arch=x64 ---electron-version=3.0.6 --overwrite"
+    "package:win": "npm run build:client && electron-packager . knockout-tour --out=release-builds --ignore=\"^/src\" --ignore=\"^/bin\" --ignore=\"^.git\" --ignore=\"^.idea\" --platform=win32 --arch=x64 --electron-version=3.0.6  --overwrite",
+    "package:mac": "npm run build:client && electron-packager . knockout-tour --out=release-builds --ignore=\"^/src\" --ignore=\"^/bin\" --ignore=\"^.git\" --ignore=\"^.idea\" --platform=darwin --arch=x64 ---electron-version=3.0.6 --overwrite"
   },
   "repository": {
     "type": "git",
