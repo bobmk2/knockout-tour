@@ -16,6 +16,7 @@ const store = createStore(
   applyMiddleware(thunk)
 );
 
+
 import Header from './components/Header'
 
 socket.initialize(store);
@@ -26,9 +27,7 @@ const rootElement = document.getElementById('app');
 ReactDOM.render(
   <Provider store={store}>
     <Router>
-      <div>
-        <Route path="/" component={App}/>
-      </div>
+      <Route path="/" component={App}/>
     </Router>
   </Provider>
   , rootElement
