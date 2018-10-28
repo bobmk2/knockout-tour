@@ -15,6 +15,19 @@ app.get('/dist/client.js', (req, res) => {
   res.sendFile('client.js', {root: `${__dirname}/../../dist`});
 });
 
+// DANGER
+const redis = require('redis');
+const redisClient = redis.createClient({
+  host: process.env.REDIS_HOST,
+  port: process.env.REDIS_PORT,
+  password: process.env.REDIS_PASSWORD
+});
+
+redisClient.set('test', 1, redis.print);
+redisClient.get('test', (err, res) => {
+  console.log('redis.test => ',res)
+})
+
 /**
  * ==========
  *  SocketIO

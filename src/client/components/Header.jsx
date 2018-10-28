@@ -144,7 +144,9 @@ class Header extends Component {
                         <tbody>
                         <tr>
                           <td align="center">
-                            {this.props.pageTitle ? this.props.pageTitle : ''}
+                            <Typography style={{color: '#FFFFFF'}} variant="title">
+                              {this.props.pageTitle ? this.props.pageTitle : ''}
+                            </Typography>
                           </td>
                         </tr>
                         </tbody>
