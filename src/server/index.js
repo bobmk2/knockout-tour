@@ -139,11 +139,11 @@ app.post('/api/message/B9KjbXT58zJXGzYiirmF54rB8uVMuZm5', (req, res) => {
             return redisClient.lpush(`messages__tour__${message.tourType}`, JSON.stringify(message), (err, ok3) => {
               if (err) {throw err}
 
-              return redisClient.hincrby('message-counts', `tour__${message.tourType}`, 1, (err, ok) => {
+              return redisClient.hincrby('message-counts', `tour__${message.tourType}`, 1, (err, count) => {
                 // 全体にbroadcastする
-                onPostedMessage(message, ok3);
+                onPostedMessage(message, count);
 
-                return res.status(200).json({ok: ':)', message, pageMessageCount: ok, tourTypeMessageCount: ok3});
+                return res.status(200).json({ok: ':)', message, pageMessageCount: ok, tourTypeMessageCount: count});
               });
             })
           });

@@ -8,6 +8,8 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import MenuItem from '@material-ui/core/MenuItem';
 import Typography from '@material-ui/core/Typography';
 import Select from '@material-ui/core/Select';
 import PersonIcon from '@material-ui/icons/Person';
@@ -16,11 +18,17 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import FilledInput from '@material-ui/core/FilledInput';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
+import OutlinedInput from '@material-ui/core/OutlinedInput';
+import Paper from '@material-ui/core/Paper';
 import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat';
+import TextField from '@material-ui/core/TextField';
+import SendIcon from '@material-ui/icons/Send';
+import InsertEmoticonIcon from '@material-ui/icons/InsertEmoticon';
 
 const {toMinSecStr} = require('../utils/StringUtil');
 
-import {updatePlayerStatus} from '../actions/PlayerActions';
+import {loginPlayer, updatePlayerStatus} from '../actions/PlayerActions';
+import {sendMessage} from '../actions/MessageActions';
 
 const styles = {
   root: {
@@ -48,10 +56,15 @@ class Header extends Component {
       tourType: 3,
       passSec: -1,
       remainSec: -1,
-      completed: 0
+      completed: 0,
+      emotion: 1,
+      feedback: '',
+      sending: false
     };
     this.handleChange = this.handleChange.bind(this);
     this.progress = this.progress.bind(this);
+    this.handleEmotionChange = this.handleEmotionChange.bind(this);
+    this.handleFeedbackChange = this.handleFeedbackChange.bind(this);
   }
 
   componentDidMount() {
@@ -89,6 +102,61 @@ class Header extends Component {
     }
   }
 
+  handleEmotionChange() {
+    return (event) => {
+      this.setState({
+        ['emotion']: event.target.value
+      })
+    };
+  }
+
+  handleFeedbackChange() {
+    return (event) => {
+      this.setState({
+        ['feedback']: event.target.value
+      });
+    };
+  }
+
+  handleSendMessageButtonClick() {
+    return (event) => {
+      const {feedback, emotion} = this.state;
+      const {dispatch, userName, tourType, pageTitle, pageUrl} = this.props;
+
+      let emotionText = '';
+      switch(emotion) {
+        case 1: emotionText='❤️';break;
+        case 2: emotionText='👍';break;
+        case 3: emotionText='⭐️';break;
+        case 4: emotionText='🤣️';break;
+        case 5: emotionText='🎉';break;
+        case 6: emotionText='👏';break;
+        case 7: emotionText='💯';break;
+        case 8: emotionText='😀';break;
+      }
+
+      const text = emotionText + (feedback.length > 0 ? ' ' + feedback : '');
+      //
+      // const tourPage = tourPages.pages[tourType];
+      //
+      // const pageUrl = tourPage.url;
+      // const pageTitle = tourPage.title;
+      //
+      // const userName = player.name;
+      //
+      console.log('clicked ' + emotionText + ' ' + feedback);
+      console.log({userName, tourType, text, pageUrl, pageTitle});
+
+      dispatch(sendMessage({userName, tourType, text, pageUrl, pageTitle}));
+
+      // TODO DANGER
+      this.setState({feedback: '', sending: true});
+      setTimeout(() => {
+        this.setState({sending: false})
+      }, 2000)
+    };
+  }
+
   render() {
     const {classes} = this.props;
     return (
@@ -104,12 +172,12 @@ class Header extends Component {
               onChange={this.handleChange('tourType')}
               style={{
                 color: this.props.login ? '#FFFFFF' : '#777777',
-                width: "120px"
+                width: "80px"
               }}
             >
-              <option value={1}>1 minute</option>
-              <option value={3}>3 minutes</option>
-              <option value={5}>5 minutes</option>
+              <option value={1}>1 min</option>
+              <option value={3}>3 min</option>
+              <option value={5}>5 min</option>
             </Select>
             {/*<IconButton className={classes.menuButton} color="inherit" aria-label="Menu">*/}
               {/*<MenuIcon/>*/}
@@ -198,6 +266,59 @@ class Header extends Component {
                 -
               </Button>
             }
+            <Paper>
+              <FormControl variant="filled" style={{}}>
+                <Select
+                  disabled={this.props.login === false}
+                  value={this.state.emotion}
+                  onChange={this.handleEmotionChange()}
+                  style={{fontSize: '120%', marginLeft: '2px', marginTop: '2px', marginBottom: '3px',height: '40px'}}
+                >
+                  <MenuItem select value={1}>
+                    ❤️
+                  </MenuItem>
+                  <MenuItem value={2}>
+                    👍
+                  </MenuItem>
+                  <MenuItem value={3}>
+                    ⭐️
+                  </MenuItem>
+                  <MenuItem value={4}>
+                    🤣️
+                  </MenuItem>
+                  <MenuItem value={5}>
+                    🎉
+                  </MenuItem>
+                  <MenuItem value={6}>
+                    👏
+                  </MenuItem>
+                  <MenuItem value={7}>
+                    💯️
+                  </MenuItem>
+                  <MenuItem value={8}>
+                    😀
+                  </MenuItem>
+
+                </Select>
+              </FormControl>
+              <TextField
+                disabled={this.props.login === false}
+                style={{marginTop: '2px', marginBottom: '3px', width: "100px", height: '40px'}}
+                placeholder="Feedback"
+                onChange={this.handleFeedbackChange()}
+                variant="filled"
+                value={this.state.feedback}
+              />
+              <Button
+                disabled={this.props.login === false || this.state.sending === true}
+                color='primary'
+                variant="contained"
+                onClick={this.handleSendMessageButtonClick()}
+                style={{marginTop: '2px', marginRight: '2px', marginBottom: '3px', height: '40px', borderTopLeftRadius: 0, borderBottomLeftRadius: 0}}
+              >
+                <SendIcon/>
+              </Button>
+            </Paper>
             <Button color="inherit">Login</Button>
           </Toolbar>
         </AppBar>
@@ -214,6 +335,9 @@ const mapStateToProps = (state) => {
   const result = {};
 
   const tourType = state.player.tourType;
+
+  result.userName = state.player.name;
+
   result.tourType = tourType;
   result.anotherPlayers = state.anotherPlayers;
   result.initialized = state.player.initialized;
@@ -222,6 +346,7 @@ const mapStateToProps = (state) => {
   if (state.tourPages.pages[tourType] !== null && typeof state.tourPages.pages[tourType] !== 'undefined') {
     const tourPage = state.tourPages.pages[tourType];
     result.pageTitle = tourPage.title;
+    result.pageUrl = tourPage.url;
     result.pageThumbnailUrl = tourPage.thumbnail;
     result.pageStartedAt = tourPage.startedAt;
     result.pageEndedAt = tourPage.endedAt;
