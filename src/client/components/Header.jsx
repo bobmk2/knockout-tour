@@ -17,6 +17,7 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Typography from '@material-ui/core/Typography';
 import Select from '@material-ui/core/Select';
 import PersonIcon from '@material-ui/icons/Person';
+import PersonOutlinedIcon from '@material-ui/icons/PersonOutline';
 import ChatIcon from '@material-ui/icons/Chat';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import FilledInput from '@material-ui/core/FilledInput';
@@ -79,7 +80,8 @@ class Header extends Component {
       sending: false,
       fetchingMessages: false,
       fetchingMessageId: -1,
-      tourTypeMessages: []
+      tourTypeMessages: [],
+      userList: []
     };
     this.handleChange = this.handleChange.bind(this);
     this.progress = this.progress.bind(this);
@@ -89,6 +91,8 @@ class Header extends Component {
     this.handleMessagePopoverClose = this.handleMessagePopoverClose.bind(this);
     this.handleMessageLinkClick = this.handleMessageLinkClick.bind(this);
     this.handleVoteButtonClick = this.handleVoteButtonClick.bind(this);
+    this.handleUserListButtonClick = this.handleUserListButtonClick.bind(this);
+    this.handleUserPopoverClose = this.handleUserPopoverClose.bind(this);
   }
 
   componentDidMount() {
@@ -173,6 +177,33 @@ class Header extends Component {
     };
   }
 
+  handleUserListButtonClick() {
+    return (event) => {
+      const users = this.props.anotherPlayers.filter(player => player.tourType === this.props.tourType);
+      users.unshift(this.props.player);
+
+      console.log('users', users);
+
+      this.setState({
+        userList: users,
+        anchorEl2: event.currentTarget
+      })
+    };
+  }
+
+  handleUserPopoverClose() {
+    return () => {
+      this.setState({
+        anchorEl2: null,
+      })
+      setTimeout(() => {
+        this.setState({
+          userList: []
+        })
+      }, 500)
+    }
+  }
+
   handleMessageListButtonClick() {
     return (event) => {
       const id = setTimeout(() => {}, 1000);
@@ -226,8 +257,12 @@ class Header extends Component {
         fetchingMessages: false,
         fetchingMessageId: null,
         anchorEl: null,
-        tourTypeMessages: []
       })
+      setTimeout(() => {
+        this.setState({
+          tourTypeMessages: []
+        })
+      }, 500)
     };
   }
 
@@ -246,8 +281,9 @@ class Header extends Component {
   render() {
     const {classes} = this.props;
 
-    const {anchorEl} = this.state;
+    const {anchorEl, anchorEl2} = this.state;
     const openMessagePopper = Boolean(anchorEl);
+    const openUserPopper = Boolean(anchorEl2);
 
     return (
         <AppBar position="fixed" style={{height: "64px"}}>
@@ -313,7 +349,7 @@ class Header extends Component {
                         <tbody>
                         <tr>
                           <td align="center">
-                            Waiting...
+                            Please input nickname and select the tour type. Bon voyage!! 🚢
                           </td>
                         </tr>
                         </tbody>
@@ -335,10 +371,53 @@ class Header extends Component {
             </div>
 
             {this.props.login === true ?
-              <Button color='inherit'>
-                <PersonIcon/>
-                {this.props.anotherPlayers.filter(player => player.tourType === this.props.tourType).length + 1}
-              </Button>
+              <div>
+                <Button
+                  color='inherit'
+                  aria-owns={openUserPopper ? 'user-popper' : null}
+                  aria-haspopup="true"
+                  onClick={this.handleUserListButtonClick()}
+                >
+                  <PersonIcon/>
+                  {this.props.anotherPlayers.filter(player => player.tourType === this.props.tourType).length + 1}
+                </Button>
+                <Popover
+                  id='user-popper'
+                  open={openUserPopper}
+                  anchorEl={anchorEl2}
+                  onClose={this.handleUserPopoverClose()}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                  }}
+                  style={{maxHeight: "500px", maxWidth: "320px"}}
+                >
+                  <div>
+                    {
+                      this.state.userList.map((user, idx) => {
+                        return (
+                          <div style={{whiteSpace: "nowrap", paddingLeft: '10px', paddingRight: '10px', paddingTop: '5px', paddingBottom: '5px', borderBottom: "solid 1px #DDDDDD"}}>
+                            <Typography variant="body2">
+                              {
+                                idx === 0 ?
+                                  <PersonIcon color="primary" />
+                                  :
+                                  <PersonOutlinedIcon />
+                              }
+                              {user.name}
+                            </Typography>
+                          </div>
+                        );
+                      })
+                    }
+                  </div>
+                </Popover>
+
+              </div>
               :
               <Button disabled color='inherit'>
                 <PersonIcon/>
@@ -467,7 +546,7 @@ class Header extends Component {
               <TextField
                 disabled={this.props.login === false}
                 style={{marginTop: '2px', marginBottom: '3px', width: "100px", height: '40px'}}
-                placeholder="Feedback"
+                placeholder="Comment"
                 onChange={this.handleFeedbackChange()}
                 variant="filled"
                 value={this.state.feedback}
@@ -507,6 +586,7 @@ const mapStateToProps = (state) => {
 
   const tourType = state.player.tourType;
 
+  result.player = state.player;
   result.userName = state.player.name;
 
   result.tourType = tourType;

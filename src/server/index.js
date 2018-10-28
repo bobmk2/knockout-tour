@@ -264,9 +264,9 @@ const playerMapping = {};
 const Player = require('../both/socket/objects/Player');
 const TourPage = require('../both/socket/objects/TourPage');
 
-const oneMinTourInterval = 60000;
-const threeMinTourInterval = 20000;
-const fiveMinTourInterval = 300000;
+const oneMinTourInterval    = 60000;
+const threeMinTourInterval = 180000;
+const fiveMinTourInterval  = 300000;
 
 const pageInterval = 10000;
 
@@ -354,15 +354,18 @@ function initialize() {
           console.log('[initialize] Current Pages', currentPage)
 
           setInterval(() => {
-            nextPage(1, oneMinTourInterval);
+            const now = new Date();
+            nextPageV2(1, now, oneMinTourInterval);
           }, (oneMinTourInterval + pageInterval));
 
           setInterval(() => {
-            nextPage(3, threeMinTourInterval);
+            const now = new Date();
+            nextPageV2(3, now, threeMinTourInterval);
           }, (threeMinTourInterval + pageInterval));
 
           setInterval(() => {
-            nextPage(5, fiveMinTourInterval);
+            const now = new Date();
+            nextPageV2(5, now, fiveMinTourInterval);
           }, (fiveMinTourInterval + pageInterval));
 
           // 終わったのでサーバ立てる
@@ -379,6 +382,56 @@ function initialize() {
 
 // 初期化
 initialize();
+
+function nextPageV2(tourType, startedAt, tourLengthMs) {
+  let _nextTourIdx = tourPageIdx[tourType] + 1;
+  if (_nextTourIdx >= tourPageList.length) {
+    _nextTourIdx = 0;
+  }
+  tourPageIdx[tourType] = _nextTourIdx;
+  onChangedPageV2(tourType, startedAt, tourLengthMs);
+}
+
+function onChangedPageV2(tourType, startedAt, tourLengthMs) {
+  emitAllClients(events.PAGE_INTERVAL, {tourType});
+  interval[tourType] = true;
+
+  try {
+    redisClient.hget('message-counts', `tour__${tourType}`, (err, count) => {
+      if (err) {
+        throw err
+      }
+      if (count === null) {
+        count = 0;
+      }
+
+      const _now = new Date();
+      const _actualIntervalMs = pageInterval - (_now - startedAt);
+
+      console.log('interval '+(_actualIntervalMs / 1000)+'[sec]')
+
+      setTimeout(() => {
+        interval[tourType] = false;
+
+        const _nextTourPage = cloneDeep(tourPageList[tourPageIdx[tourType]]);
+
+        const now = new Date();
+
+        // TODO WARN
+        _nextTourPage.startedAt = new Date(now);
+        _nextTourPage.endedAt = new Date(_nextTourPage.startedAt.getTime() + tourLengthMs);
+        _nextTourPage.messageCount = count;
+
+        currentPage[tourType] = _nextTourPage;
+
+        emitAllClients(events.MOVE_PAGE, {tourType, tourPage: _nextTourPage.toEmitData()});
+      }, _actualIntervalMs);
+  });
+  } catch (error) {
+    util.log(error);
+  }
+}
+
 
 function nextPage(tourType, tourLengthMs) {
   let _nextTourIdx = tourPageIdx[tourType] + 1;
