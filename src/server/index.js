@@ -26,6 +26,7 @@ app.get('/dist/client.js', (req, res) => {
   res.sendFile('client.js', {root: `${__dirname}/../../dist`});
 });
 
+// DANGER
 // 使いたいときだけ
 //redisClient.del('pages'); // ページリセット
 
@@ -52,6 +53,7 @@ app.post('/api/page/Xm3W8uefdRHiQCxdJhVzRW7Le3yTAHJf', (req, res) => {
         return res.status(400).json({error: 'exists same url', page, exists: foundSameUrl})
       }
       return redisClient.rpush('pages', JSON.stringify(page.toJSON()), (err ,count) => {
+        onUpdatedPageList();
         return res.status(200).json(Object.assign({ok: ":)"}, {page}, {count}));
       });
     });
@@ -77,6 +79,7 @@ app.put('/api/page/HPeGNrtwZVBZMSmTFPGB37mNBNaeH5Wg', (req, res) => {
         data[index] = page.toJSON();
         return redisClient.del('pages', (err) => {
           return redisClient.rpush.apply(redisClient, ['pages'].concat(data.map(p => JSON.stringify(p))).concat((err, count) => {
+            onUpdatedPageList();
             return res.status(200).json({ok: ':)', count})
           }));
         });
@@ -101,6 +104,7 @@ app.delete('/api/page/PnsJDuDLD3WmQajeQJaK5FGXeU6h2Ebz', (req, res) => {
     // たぶん何かしらあると思うが一度全部消して全部登録
     return redisClient.del('pages', (err) => {
       return redisClient.rpush.apply(redisClient, ['pages'].concat(pages.map(p => JSON.stringify(p))).concat((err, count) => {
+        onUpdatedPageList();
         return res.status(200).json({ok: ':)', count})
       }));
     });
@@ -165,6 +169,15 @@ const interval = {
 
 let socket = null;
 
+function onUpdatedPageList() {
+  console.log('[onUpdatedPageList]');
+  // ページリストを取得して更新する
+  return redisClient.lrange('pages', 0, -1, (err, data) => {
+    const pages = data.map(d => new TourPage(JSON.parse(d)));
+    tourPageList = pages;
+  });
+}
+
 function initialize() {
   // ページリストを取得する
   return redisClient.lrange('pages', 0, -1, (err, data) => {
@@ -206,7 +219,7 @@ function initialize() {
     currentPage[5] = _five;
 
     console.log('[initialize] Current Pages', currentPage)
-    
+
     setInterval(() => {
       nextPage(1, oneMinTourInterval);
     }, (oneMinTourInterval + pageInterval));
