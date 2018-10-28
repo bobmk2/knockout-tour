@@ -6,6 +6,7 @@ const REMOVE_PLAYER = 'remove_player';
 const CHANGE_PLAYER_STATUS = 'change_player_status';
 const MOVE_PAGE = 'move_page';
 const PAGE_INTERVAL = 'interval';
+const POSTED_MESSAGE = 'posted_message';
 
 module.exports = {
   CONNECT,
@@ -15,5 +16,6 @@ module.exports = {
   REMOVE_PLAYER,
   CHANGE_PLAYER_STATUS,
   MOVE_PAGE,
-  PAGE_INTERVAL
+  PAGE_INTERVAL,
+  POSTED_MESSAGE
 };

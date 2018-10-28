@@ -3,6 +3,8 @@ const bodyParser = require('body-parser');
 const app = express();
 const {findIndex} = require('lodash');
 
+const Message = require('../both/socket/objects/Message');
+
 app.use(bodyParser.json());
 
 const port = process.env.PORT || 5000;
@@ -111,7 +113,128 @@ app.delete('/api/page/PnsJDuDLD3WmQajeQJaK5FGXeU6h2Ebz', (req, res) => {
   });
 });
 
+// コメント投稿
+app.post('/api/message/B9KjbXT58zJXGzYiirmF54rB8uVMuZm5', (req, res) => {
+  try {
+    const body = req.body;
 
+    body.createdAt = new Date();
+    const message = new Message(body);
+
+    if (message.isValid()) {
+      // あるかどうか確認(頻度的にきついのでメモリ上のデータ使う)
+      const found = tourPageList.map(t => t.url === message.pageUrl)[0];
+      if (typeof found !== 'undefined') {
+        // まず合計メッセージ数を更新
+        return redisClient.hincrby('message-counts', message.pageUrl, 1, (err, ok) => {
+          if (err) {throw err}
+
+          // 次にURLに紐づくメッセージとして内容を保存
+          return redisClient.lpush(`messages_${message.pageUrl}`, JSON.stringify(message), (err, ok2) => {
+            if (err) {throw err}
+
+            // 最後にtourTypeに紐づくメッセージとして内容を保存
+            console.log('key => ', `messages__tour__${message.tourType}`);
+
+            return redisClient.lpush(`messages__tour__${message.tourType}`, JSON.stringify(message), (err, ok3) => {
+              if (err) {throw err}
+
+              return redisClient.hincrby('message-counts', `tour__${message.tourType}`, 1, (err, ok) => {
+                // 全体にbroadcastする
+                onPostedMessage(message, ok3);
+
+                return res.status(200).json({ok: ':)', message, pageMessageCount: ok, tourTypeMessageCount: ok3});
+              });
+            })
+          });
+        })
+      } else {
+        return res.status(404).json({error: 'not found same url page data', message});
+      }
+    } else {
+      return res.status(400).json({error: 'invalid', message});
+    }
+  } catch (error) {
+    res.status(500).json({error: 'unknown error'});
+  }
+});
+
+// コメント内容取得(URL基準)
+// TODO bad rest api path
+app.get('/api/message_by_url/fURUKBrUJUZbgp7x8A75JYra9bPYHkjc', (req, res) => {
+  try {
+    const url = req.query.url;
+    let from = req.query.from;
+    let to = req.query.to;
+
+    if (typeof url === 'undefined' || typeof from === 'undefined' || typeof to === 'undefined') {
+      return res.status(400).json({error: 'invalid', query: {url, from, to}})
+    }
+    // TODO validate values
+
+    from = parseInt(from);
+    to = parseInt(to);
+
+    const found = tourPageList.map(t => t.url === url)[0];
+    if (typeof found !== 'undefined') {
+      return redisClient.lrange(`messages_${url}`, from, to, (err, data) => {
+        if (err) {throw err}
+
+        return redisClient.hget('message-counts', url, (err, count) => {
+          if (err) {throw err}
+
+          data = data.map(d => JSON.parse(d));
+          if (count === null) {
+            count = 0;
+          }
+
+          return res.status(200).json({data, totalCount: count});
+        });
+      });
+    } else {
+      return res.status(404).json({error: 'not found same url page data', message});
+    }
+  } catch (error) {
+    res.status(500).json({error: 'unknown error'});
+  }
+});
+
+// コメント内容取得(ツアー単位)
+app.get('/api/message_by_tour_type/gM26uDTbsSJfwZ5byp8xMddMPYJrUpyB', (req, res) => {
+  try {
+    const qTourType = req.query.tour_type;
+    let from = req.query.from;
+    let to = req.query.to;
+
+    if (typeof qTourType === 'undefined' || typeof from === 'undefined' || typeof to === 'undefined') {
+      return res.status(400).json({error: 'invalid', query: {tour_type: qTourType, from, to}});
+    }
+
+    const tourType = parseInt(qTourType);
+    from = parseInt(from);
+    to = parseInt(to);
+
+    if (!([1,3,5].includes(tourType))) {
+      return res.status(400).json({error: 'invalid tour type value', query: {tourType}});
+    }
+
+    console.log('key => ', `messages__tour__${tourType}`);
+    return redisClient.lrange(`messages__tour__${tourType}`, from, to, (err, data) => {
+      if (err) {throw err}
+      const messages = data.map(d => JSON.parse(d));
+      return redisClient.hget('message-counts', `tour__${tourType}`, (err, count) => {
+        if (err) {throw err}
+        if (count === null) {
+          count = 0;
+        }
+
+        return res.status(200).json({data: messages, totalCount: count});
+      });
+    })
+  } catch (error) {
+    res.status(500).json({error: 'unknown error'});
+  }
+});
 
 /*
 redisClient.set('test', 1, redis.print);
@@ -355,6 +478,11 @@ function onRemovedPlayer(broadcast, connectionId) {
   removeServerPlayer(_removedPlayer);
 
   util.log('remain clients: ' + Object.keys(clients).length);
+}
+
+function onPostedMessage(message, tourTypeTotalCount) {
+  util.log('[onPostedMessage] ', message, tourTypeTotalCount);
+  emitAllClients(events.POSTED_MESSAGE, {message, tourTypeTotalCount});
 }
 
 function existsPlayer(id) {

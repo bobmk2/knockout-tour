@@ -32,6 +32,7 @@ class Socket {
     socket.on(events.CHANGE_PLAYER_STATUS, this.onChangedPlayerStatus);
     socket.on(events.MOVE_PAGE, this.onMovedPage);
     socket.on(events.PAGE_INTERVAL, this.onStartedPageInterval);
+    socket.on(events.POSTED_MESSAGE, this.onPostedMessage)
   }
 
   onSocketConnected() {
@@ -110,6 +111,12 @@ class Socket {
   loginPlayer(player) {
     console.log('Login Player', player);
     socket.emit(events.JOIN_PLAYER, player);
+  }
+
+  onPostedMessage(data) {
+    const message = data.message;
+    const tourTypeTotalCount = data.tourTypeTotalCount;
+    console.log('Posted Message', tourTypeTotalCount, message);
   }
 }
 

@@ -150,7 +150,7 @@ class LoginForm extends Component {
           // component={Link}
           // to="/tour"
         >
-          {this.props.initialized === false ? <CircularProgress size={20} color='inherit'/> : <DirectionsBoatIcon className={classes.loginIcon}/>}
+          {this.props.initialized === false ? <CircularProgress size={20} style={{marginRight: '5px'}} color='inherit'/> : <DirectionsBoatIcon className={classes.loginIcon} style={{marginRight: '5px'}}/>}
           {this.props.initialized === false ? "Loading..." : "Start Tour"}
         </Button>
       </form>
