@@ -40,8 +40,6 @@ app.get('/api/page/3Vy5nybuWrP3JiwjQ7jXBW2Ujri8hLkk', (req, res) => {
 // ページ追加
 app.post('/api/page/Xm3W8uefdRHiQCxdJhVzRW7Le3yTAHJf', (req, res) => {
   const body = req.body;
-
-  console.log(body);
   const page = new TourPage(body);
 
   if (page.isValid()) {
@@ -145,37 +143,18 @@ const fiveMinTourInterval = 300000;
 
 const pageInterval = 10000;
 
-const tourPageList = [
-  new TourPage({thumbnail: 'https://wired.jp/wp-content/uploads/2017/08/Google_G_Logo-TA.jpg', title: 'Test1', url: 'https://google.com'}),
-  new TourPage({thumbnail: 'https://s.yimg.jp/images/top/sp2/cmn/logo-170307.png', title: 'Test2', url: 'https://www.yahoo.co.jp/'}),
-  new TourPage({thumbnail: 'http://ap-land.com/wp-content/uploads/2014/09/sns.jpg', title: 'Test3', url: 'https://twitter.com'})
-];
+let tourPageList = [];
 
 const tourPageIdx = {
-  1: 0,
-  3: 1,
-  5: 2
+  1: -1,
+  3: -1,
+  5: -1
 };
 
-
-// init
-const _now = new Date();
-const _one = cloneDeep(tourPageList[tourPageIdx[1]]);
-_one.startedAt = _now;
-_one.endedAt = new Date(_now.getTime() + oneMinTourInterval);
-
-const _three = cloneDeep(tourPageList[tourPageIdx[3]]);
-_three.startedAt = _now;
-_three.endedAt = new Date(_now.getTime() + threeMinTourInterval);
-
-const _five = cloneDeep(tourPageList[tourPageIdx[5]]);
-_five.startedAt = _now;
-_five.endedAt = new Date(_now.getTime() + fiveMinTourInterval);
-
 const currentPage = {
-  1: _one,
-  3: _three,
-  5: _five
+  1: null,
+  3: null,
+  5: null
 };
 
 const interval = {
@@ -184,17 +163,72 @@ const interval = {
   5: false
 };
 
-setInterval(() => {
-  nextPage(1, oneMinTourInterval);
-}, (oneMinTourInterval + pageInterval));
+let socket = null;
 
-setInterval(() => {
-  nextPage(3, threeMinTourInterval);
-}, (threeMinTourInterval + pageInterval));
+function initialize() {
+  // ページリストを取得する
+  return redisClient.lrange('pages', 0, -1, (err, data) => {
+    const pages = data.map(d => new TourPage(JSON.parse(d)));
+    tourPageList = pages;
 
-setInterval(() => {
-  nextPage(5, fiveMinTourInterval);
-}, (fiveMinTourInterval + pageInterval));
+    // 3で割って、開始位置に使う
+    // @memo
+    // 1min => 0
+    // 3min => (seprate)
+    // 5min => (seprate * 2)
+    const separate = Math.ceil(pages.length / 3);
+    const oneIdx = 0;
+    const threeIdx = separate >= pages.length ? pages.length - 1 : separate;
+    const fiveIdx = (separate * 2) >= pages.length ? pages.length - 1 :separate * 2;
+
+    tourPageIdx[1] = oneIdx;
+    tourPageIdx[3] = threeIdx;
+    tourPageIdx[5] = fiveIdx;
+
+    console.log('[initialize] Page indexes', tourPageIdx);
+
+    // init
+    const _now = new Date();
+    const _one = cloneDeep(tourPageList[tourPageIdx[1]]);
+    _one.startedAt = _now;
+    _one.endedAt = new Date(_now.getTime() + oneMinTourInterval);
+
+    const _three = cloneDeep(tourPageList[tourPageIdx[3]]);
+    _three.startedAt = _now;
+    _three.endedAt = new Date(_now.getTime() + threeMinTourInterval);
+
+    const _five = cloneDeep(tourPageList[tourPageIdx[5]]);
+    _five.startedAt = _now;
+    _five.endedAt = new Date(_now.getTime() + fiveMinTourInterval);
+
+    currentPage[1] = _one;
+    currentPage[3] = _three;
+    currentPage[5] = _five;
+
+    console.log('[initialize] Current Pages', currentPage)
+    
+    setInterval(() => {
+      nextPage(1, oneMinTourInterval);
+    }, (oneMinTourInterval + pageInterval));
+
+    setInterval(() => {
+      nextPage(3, threeMinTourInterval);
+    }, (threeMinTourInterval + pageInterval));
+
+    setInterval(() => {
+      nextPage(5, fiveMinTourInterval);
+    }, (fiveMinTourInterval + pageInterval));
+
+    // 終わったのでサーバ立てる
+    server.listen(port, err => {
+      socket = socketIO.listen(server);
+      setEventHandlers();
+    });
+  });
+}
+
+// 初期化
+initialize();
 
 function nextPage(tourType, tourLengthMs) {
   let _nextTourIdx = tourPageIdx[tourType] + 1;
@@ -219,16 +253,9 @@ function onChangedPage(tourType, tourLengthMs) {
   interval[tourType] = true;
   setTimeout(() => {
     interval[tourType] = false;
-    emitAllClients(events.MOVE_PAGE, {tourType, tourPage: _nextTourPage});
+    emitAllClients(events.MOVE_PAGE, {tourType, tourPage: _nextTourPage.toEmitData()});
   }, pageInterval);
 }
-
-let socket = null;
-
-server.listen(port, err => {
-  socket = socketIO.listen(server);
-  setEventHandlers();
-});
 
 function setEventHandlers() {
   socket.sockets.on('connection', onSocketConnection);
@@ -246,9 +273,9 @@ function onSocketConnection(client) {
 
   const initialData = {
     tourPages: {
-      1: currentPage[1],
-      3: currentPage[3],
-      5: currentPage[5]
+      1: currentPage[1].toEmitData(),
+      3: currentPage[3].toEmitData(),
+      5: currentPage[5].toEmitData()
     },
     interval,
     players: Array.from(players)

@@ -1,10 +1,11 @@
 class TourPage {
-  constructor({thumbnail, title, url, entry, commentCount = 0}) {
+  constructor({thumbnail, title, url, entry, startedAt, endedAt}) {
     this.thumbnail = thumbnail;
     this.title = title;
     this.url = url;
     this.entry = entry;
-    this.commentCount = commentCount;
+    this.startedAt = startedAt;
+    this.endedAt = endedAt;
   }
 
   isValid() {
@@ -22,6 +23,17 @@ class TourPage {
       title: this.title,
       url: this.url,
       entry: this.entry
+    }
+  }
+
+  toEmitData() {
+    return {
+      thumbnail: this.thumbnail,
+      title: this.title,
+      url: this.url,
+      entry: this.entry,
+      startedAt: this.startedAt,
+      endedAt: this.endedAt
     }
   }
 }
