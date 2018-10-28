@@ -16,16 +16,19 @@ const store = createStore(
   applyMiddleware(thunk)
 );
 
-socket.initialize();
+import Header from './components/Header'
 
-socket.emitPlayer(new Player({id: -1, name: 'test' + (Math.round(Math.random() * 100)), tourType: 3}));
+socket.initialize(store);
+
+// socket.emitPlayer(new Player({id: -1, name: 'test' + (Math.round(Math.random() * 100)), tourType: 3}));
 
 const rootElement = document.getElementById('app');
 ReactDOM.render(
   <Provider store={store}>
     <Router>
-      <Route path="/" component={LoginPage}/>
-      {/*<Route path="/" component={App}/>*/}
+      <div>
+        <Route path="/" component={App}/>
+      </div>
     </Router>
   </Provider>
   , rootElement

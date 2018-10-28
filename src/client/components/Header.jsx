@@ -10,6 +10,7 @@ import IconButton from '@material-ui/core/IconButton';
 import MenuIcon from '@material-ui/icons/Menu';
 import Typography from '@material-ui/core/Typography';
 import Select from '@material-ui/core/Select';
+import PersonIcon from '@material-ui/icons/Person';
 
 import {updatePlayerStatus} from '../actions/PlayerActions';
 
@@ -59,8 +60,7 @@ class Header extends Component {
     console.log('props', this.props)
     const {classes} = this.props;
     return (
-      <div className={classes.root}>
-        <AppBar position="static">
+        <AppBar position="fixed">
           <Toolbar>
             <Select
               value={this.props.tourType}
@@ -77,10 +77,20 @@ class Header extends Component {
             <Typography variant="title" color="inherit" className={classes.flex}>
               👊 Knockout Tour 🚀
             </Typography>
+            {this.props.login === true ?
+              <Button color='inherit'>
+                <PersonIcon/>
+                {this.props.anotherPlayers.filter(player => player.tourType === this.props.tourType).length + 1}
+              </Button>
+              :
+              <Button disabled color='inherit'>
+                <PersonIcon/>
+                -
+              </Button>
+            }
             <Button color="inherit">Login</Button>
           </Toolbar>
         </AppBar>
-      </div>
     );
   }
 }
@@ -93,7 +103,10 @@ Header.propTypes = {
 const mapStateToProps = (state) => {
   console.log('Header ', state.player)
   return {
-    tourType: state.player.tourType
+    tourType: state.player.tourType,
+    anotherPlayers: state.anotherPlayers,
+    initialized: state.player.initialized,
+    login: state.player.login
   };
 };
 
