@@ -1,11 +1,12 @@
 class TourPage {
-  constructor({thumbnail, title, url, entry, startedAt, endedAt}) {
+  constructor({thumbnail, title, url, entry, startedAt, endedAt, messageCount}) {
     this.thumbnail = thumbnail;
     this.title = title;
     this.url = url;
     this.entry = entry;
     this.startedAt = startedAt;
     this.endedAt = endedAt;
+    this.messageCount = messageCount;
   }
 
   isValid() {
@@ -33,7 +34,8 @@ class TourPage {
       url: this.url,
       entry: this.entry,
       startedAt: this.startedAt,
-      endedAt: this.endedAt
+      endedAt: this.endedAt,
+      messageCount: this.messageCount
     }
   }
 }
