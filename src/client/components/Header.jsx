@@ -369,7 +369,7 @@ class Header extends Component {
                     vertical: 'top',
                     horizontal: 'left',
                   }}
-                  style={{maxHeight: "720px", maxWidth: "320px"}}
+                  style={{maxHeight: "500px", maxWidth: "320px"}}
                 >
                   {this.state.fetchingMessages ?
                     <div style={{height: '50px', width: "200px", paddingLeft: "5px", paddingRight: "5px"}}>
@@ -398,7 +398,7 @@ class Header extends Component {
                                   <Button
                                     size="small"
                                     color="primary"
-                                    style={{paddingLeft: "4px", textTransform: "none"}}
+                                    style={{paddingLeft: "4px", paddingRight: "4px", paddingTop: "4px", paddingBottom: "4px", textTransform: "none"}}
                                     onClick={this.handleMessageLinkClick(message.pageUrl)}
                                   >
                                     {message.pageTitle}
