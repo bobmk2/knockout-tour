@@ -264,9 +264,9 @@ const playerMapping = {};
 const Player = require('../both/socket/objects/Player');
 const TourPage = require('../both/socket/objects/TourPage');
 
-const oneMinTourInterval = 60000;
-const threeMinTourInterval = 20000;
-const fiveMinTourInterval = 300000;
+const oneMinTourInterval    = 60000;
+const threeMinTourInterval = 180000;
+const fiveMinTourInterval  = 300000;
 
 const pageInterval = 10000;
 
