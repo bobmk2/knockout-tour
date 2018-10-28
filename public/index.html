@@ -2,16 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>👊 Knockout Tour 👊</title>
+  <title>👊 Knockout Tour 🚢</title>
   <head>
-    <script src='/socket.io/socket.io.js'></script>
-    <!--<link rel="stylesheet" type="text/css" href="style/main.css">-->
+    <link rel="stylesheet" type="text/css" href="style/main.css">
   </head>
 </head>
-<body id="main" style="margin:0px">
-  <div id="app"></div>
-  <script type="text/javascript" src="/dist/client.js"></script>
+<body>
   <script src="https://www.nodeknockout.com/entries/4-team-kuramae/vote.js" type="text/javascript"></script>
-
+  <div id="main">
+    <h1>👊 Knockout Tour 🚢</h1>
+    <h2>What's is this.</h2>
+    <div class="content">
+      <p>
+        This is the binary application for browsing node knockout entries with another users.<br/>
+        There are three type of tour, 1min, 3min and 5min.<br/>
+        For example, when you choose 1min tour, you and another users who choose same tour will view same node-knockout entry at the same timing.<br/>
+        And this application will transition the page automatically you are viewing to the next entry.</p>
+    </div>
+    <h2>Download</h2>
+    <div class="content">
+      ・<a href="/release-builds/knockout-tour_mac.zip">for macOS</a><br/>
+      ・<a href="/release-builds/knockout-tour_win_x64.zip">for 64bit Windows</a><br/>
+    </div>
+    <h2>Why binary app?</h2>
+    <div class="content">
+      CORS 😰 <br/>
+      <b>iframe</b> is not suitable for my goal.<br/>
+      Electron has <b>webview</b>, it's good ☺.
+    </div>
+    <h2>Thanks!</h2>
+  </div>
 </body>
 </html>

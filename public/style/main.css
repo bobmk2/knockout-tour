@@ -1,0 +1,20 @@
+body {
+    margin:0px;
+    width: 100%;
+    background-color: #CCCCFF;
+}
+
+div#main {
+    background-color: whitesmoke;
+    margin: 0 auto;
+    width: 640px;
+    padding: 20px;
+}
+
+div.content {
+    background-color: white;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+}
