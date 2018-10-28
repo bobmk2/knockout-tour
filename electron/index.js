@@ -13,7 +13,7 @@ app.on('window-all-closed', function() {
 
 app.on('ready', function() {
   mainWindow = new browserWindow({
-    window: 800,
+    window: 900,
     height: 600,
     'node-integration': false
   });

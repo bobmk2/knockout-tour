@@ -2,6 +2,10 @@ import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import {connect} from 'react-redux';
 
+import {padStart} from 'lodash';
+
+import Message from '../../both/socket/objects/Message';
+
 import { withStyles } from '@material-ui/core/styles';
 import AppBar from '@material-ui/core/AppBar';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -24,11 +28,21 @@ import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat';
 import TextField from '@material-ui/core/TextField';
 import SendIcon from '@material-ui/icons/Send';
 import InsertEmoticonIcon from '@material-ui/icons/InsertEmoticon';
+import Popover from '@material-ui/core/Popover';
+import CircularProgress from '@material-ui/core/CircularProgress';
+import VoteIcon from '@material-ui/icons/HowToVote';
+
+import Card from '@material-ui/core/Card';
+import CardHeader from '@material-ui/core/CardHeader';
 
 const {toMinSecStr} = require('../utils/StringUtil');
 
 import {loginPlayer, updatePlayerStatus} from '../actions/PlayerActions';
 import {sendMessage} from '../actions/MessageActions';
+
+import fetch from 'isomorphic-fetch';
+const {shell} = require('electron');
+
 
 const styles = {
   root: {
@@ -36,6 +50,9 @@ const styles = {
   },
   flex: {
     flex: 1,
+  },
+  grow: {
+    flexGrow: 1,
   },
   menuButton: {
     marginLeft: -12,
@@ -59,12 +76,19 @@ class Header extends Component {
       completed: 0,
       emotion: 1,
       feedback: '',
-      sending: false
+      sending: false,
+      fetchingMessages: false,
+      fetchingMessageId: -1,
+      tourTypeMessages: []
     };
     this.handleChange = this.handleChange.bind(this);
     this.progress = this.progress.bind(this);
     this.handleEmotionChange = this.handleEmotionChange.bind(this);
     this.handleFeedbackChange = this.handleFeedbackChange.bind(this);
+    this.handleMessageListButtonClick = this.handleMessageListButtonClick.bind(this);
+    this.handleMessagePopoverClose = this.handleMessagePopoverClose.bind(this);
+    this.handleMessageLinkClick = this.handleMessageLinkClick.bind(this);
+    this.handleVoteButtonClick = this.handleVoteButtonClick.bind(this);
   }
 
   componentDidMount() {
@@ -136,14 +160,6 @@ class Header extends Component {
       }
 
       const text = emotionText + (feedback.length > 0 ? ' ' + feedback : '');
-      //
-      // const tourPage = tourPages.pages[tourType];
-      //
-      // const pageUrl = tourPage.url;
-      // const pageTitle = tourPage.title;
-      //
-      // const userName = player.name;
-      //
       console.log('clicked ' + emotionText + ' ' + feedback);
       console.log({userName, tourType, text, pageUrl, pageTitle});
 
@@ -157,10 +173,84 @@ class Header extends Component {
     };
   }
 
+  handleMessageListButtonClick() {
+    return (event) => {
+      const id = setTimeout(() => {}, 1000);
+
+      this.setState({
+        fetchingMessages: true,
+        fetchingMessageId: id,
+        tourTypeMessages: [],
+        anchorEl: event.currentTarget
+      });
+
+      const {tourType} = this.props;
+
+      fetch(`$socket.io_URL$/api/message_by_tour_type/gM26uDTbsSJfwZ5byp8xMddMPYJrUpyB?tour_type=${tourType}&from=0&to=100`, {
+        method: 'GET',
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+        .then((response) => {
+          // handle HTTP response
+          console.log(response);
+          console.log(this.state);
+
+          if (this.state.fetchingMessageId !== null && id === this.state.fetchingMessageId) {
+            this.setState({
+              fetchingMessages: false,
+              fetchingMessageId: null
+            });
+            return response.json()
+              .then(json => {
+                this.setState({
+                  tourTypeMessages: json.data.map(d => {
+                    d.createdAt = new Date(d.createdAt);
+                    return new Message(d);
+                  })
+                });
+              })
+          } else {
+          }
+        }, (error) => {
+          // handle network error
+          console.log(error.message);
+        });
+    };
+  }
+
+  handleMessagePopoverClose() {
+    return (event) => {
+      this.setState({
+        fetchingMessages: false,
+        fetchingMessageId: null,
+        anchorEl: null,
+        tourTypeMessages: []
+      })
+    };
+  }
+
+  handleVoteButtonClick() {
+    return () => {
+      shell.openExternal('https://www.nodeknockout.com/entries/4-team-kuramae/vote');
+    };
+  }
+
+  handleMessageLinkClick(url) {
+    return () => {
+      shell.openExternal(url);
+    }
+  }
+
   render() {
     const {classes} = this.props;
+
+    const {anchorEl} = this.state;
+    const openMessagePopper = Boolean(anchorEl);
+
     return (
-        <AppBar position="fixed">
+        <AppBar position="fixed" style={{height: "64px"}}>
           <Toolbar>
             <DirectionsBoatIcon
               color={this.props.login === true ? 'inherit' : 'disabled'}
@@ -256,23 +346,96 @@ class Header extends Component {
               </Button>
             }
             {this.props.login === true ?
-              <Button color='inherit'>
-                <ChatIcon/>
-                {this.props.messageCount}
-              </Button>
+              <div>
+                <Button
+                  aria-owns={openMessagePopper ? 'message-popper' : null}
+                  aria-haspopup="true"
+                  color='inherit'
+                  onClick={this.handleMessageListButtonClick()}
+                >
+                  <ChatIcon/>
+                  {this.props.messageCount}
+                </Button>
+                <Popover
+                  id='message-popper'
+                  open={openMessagePopper}
+                  anchorEl={anchorEl}
+                  onClose={this.handleMessagePopoverClose()}
+                  anchorOrigin={{
+                    vertical: 'bottom',
+                    horizontal: 'left',
+                  }}
+                  transformOrigin={{
+                    vertical: 'top',
+                    horizontal: 'left',
+                  }}
+                  style={{maxHeight: "720px", maxWidth: "320px"}}
+                >
+                  {this.state.fetchingMessages ?
+                    <div style={{height: '50px', width: "200px", paddingLeft: "5px", paddingRight: "5px"}}>
+                      <table style={{height: "100%", width: "100%"}}>
+                        <tbody>
+                        <tr>
+                          <td align="center">
+                            <Typography variant="subtitle1">
+                              <CircularProgress size={15}/>
+                              Loading...
+                            </Typography>
+                          </td>
+                        </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    :
+                    <div>
+                      {
+                        this.state.tourTypeMessages.map(message => {
+                          return (
+                            <div style={{paddingLeft: "10px", paddingRight: "10px", paddingTop: "5px", paddingBottom: "5px", borderBottom: "solid 1px #DDDDDD" }}>
+                              <div>
+                                <div style={{whiteSpace: "nowrap"}}>
+                                  <div style={{display: 'inline-block', paddingRight: '2px'}}>to</div>
+                                  <Button
+                                    size="small"
+                                    color="primary"
+                                    style={{paddingLeft: "4px", textTransform: "none"}}
+                                    onClick={this.handleMessageLinkClick(message.pageUrl)}
+                                  >
+                                    {message.pageTitle}
+                                  </Button>
+                                </div>
+                                <div style={{whiteSpace: "nowrap"}}>
+                                  <Typography variant="body2">
+                                    {message.text}
+                                  </Typography>
+                                </div>
+                              </div>
+                              <div style={{whiteSpace: "nowrap"}}>
+                                <Typography variant="caption">
+                                  {padStart(message.createdAt.getMonth() + 1, 2, '0')}/{padStart(message.createdAt.getDate(), 2, '0')} {message.createdAt.getHours()}:{padStart(message.createdAt.getMinutes(), 2, '0')} by {message.userName}
+                                </Typography>
+                              </div>
+                            </div>
+                          );
+                        })
+                      }
+                    </div>
+                  }
+                </Popover>
+              </div>
               :
               <Button disabled color='inherit'>
                 <ChatIcon/>
                 -
               </Button>
             }
-            <Paper>
+            <Paper style={{height: "44px", minWidth: "220px"}}>
               <FormControl variant="filled" style={{}}>
                 <Select
                   disabled={this.props.login === false}
                   value={this.state.emotion}
                   onChange={this.handleEmotionChange()}
-                  style={{fontSize: '120%', marginLeft: '2px', marginTop: '2px', marginBottom: '3px',height: '40px'}}
+                  style={{fontSize: '120%', marginLeft: '2px', marginTop: '2px', marginBottom: '3px',height: '40px', width: '50px'}}
                 >
                   <MenuItem select value={1}>
                     ❤️
@@ -319,7 +482,15 @@ class Header extends Component {
                 <SendIcon/>
               </Button>
             </Paper>
-            <Button color="inherit">Login</Button>
+            <Typography variant="h6" color="inherit" className={classes.grow}>
+            </Typography>
+            <Button
+              color="inherit"
+              onClick={this.handleVoteButtonClick()}
+            >
+              <VoteIcon/>
+              Vote
+            </Button>
           </Toolbar>
         </AppBar>
     );

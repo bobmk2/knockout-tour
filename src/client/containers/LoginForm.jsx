@@ -98,7 +98,7 @@ class LoginForm extends Component {
           {/**/}
         {/*</FormControl>*/}
         <TextField
-          error={this.props.name.length === 0}
+          error={this.props.name.length === 0 || this.props.name.length > 24}
           id="login-name"
           label="Name"
           className={classes.textField}
@@ -146,7 +146,7 @@ class LoginForm extends Component {
           color="primary"
           className={classes.loginButton}
           onClick={this.handleStartButtonClick()}
-          disabled={this.props.initialized === false || this.props.login === true || this.props.name.length === 0}
+          disabled={this.props.initialized === false || this.props.login === true || this.props.name.length === 0 || this.props.name.length > 24}
           // component={Link}
           // to="/tour"
         >
