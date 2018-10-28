@@ -1,8 +1,7 @@
 import events from '../../both/socket/Events';
 
-// const {io} = require('socket.io-client')('/socket.io/socket.io.js');
-const io = require('socket.io-client')('http://localhost:5000');
-// const io = require('socket.io-client');
+//const io = require('socket.io-client')('http://localhost:5000');
+const io = require('socket.io-client')('$socket.io_URL$');
 
 let socket = null;
 

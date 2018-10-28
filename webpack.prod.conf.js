@@ -38,6 +38,14 @@ module.exports = {
         query:{
           presets: ['react', 'env']
         }
+      },
+      {
+        loader: 'string-replace-loader',
+        options: {
+          multiple: [
+            {search: '$socket.io_URL$', replace: 'https://node-knockout-2018.herokuapp.com'}
+          ]
+        }
       }
     ]
   }

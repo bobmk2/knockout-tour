@@ -32,7 +32,7 @@ class WebviewPage extends Component {
     return (
       <div style={{position: 'relative', height: '100%', width: '100%'}}>
         {
-          this.props.interval || true ?
+          this.props.interval ?
             <div style={{zIndex: 1, position:'absolute', top: 0, left: 0, height: '100%', width: '100%', backgroundColor: '#000000CC'}}>
               <Grid
                 className={classes.root}

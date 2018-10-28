@@ -1,10 +1,9 @@
 class TourPage {
-  constructor({thumbnail, title, url, startedAt, endedAt}) {
+  constructor({thumbnail, title, url, commentCount}) {
     this.thumbnail = thumbnail;
     this.title = title;
     this.url = url;
-    this.startedAt = startedAt;
-    this.endedAt = endedAt;
+    this.commentCount = commentCount;
   }
 }
 

@@ -18,7 +18,6 @@ import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import DirectionsBoatIcon from '@material-ui/icons/DirectionsBoat';
 
-
 const {toMinSecStr} = require('../utils/StringUtil');
 
 import {updatePlayerStatus} from '../actions/PlayerActions';
