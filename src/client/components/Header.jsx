@@ -349,7 +349,7 @@ class Header extends Component {
                         <tbody>
                         <tr>
                           <td align="center">
-                            Waiting...
+                            Please input nickname and select the tour type. Bon voyage!! 🚢
                           </td>
                         </tr>
                         </tbody>
@@ -546,7 +546,7 @@ class Header extends Component {
               <TextField
                 disabled={this.props.login === false}
                 style={{marginTop: '2px', marginBottom: '3px', width: "100px", height: '40px'}}
-                placeholder="Feedback"
+                placeholder="Comment"
                 onChange={this.handleFeedbackChange()}
                 variant="filled"
                 value={this.state.feedback}
